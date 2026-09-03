@@ -28,31 +28,27 @@ dependencies {
 
 }
 
-sourceSets {
-    main {
-        // Transition source directory: only net/ancientloader is compiled or packaged.
-        // In the standalone repository this should become src/main/java.
-        java.srcDirs = ['main/src', '../src']
-        java.include 'net/ancientloader/**'
-    }
-}
-
 def minecraftJar = providers.gradleProperty('minecraftJar')
         .map { file(it) }
-        .orElse(layout.projectDirectory.file('client.jar').asFile)
+        .orElse(layout.projectDirectory.file('build/client.jar').asFile)
 def decompiledDir = layout.buildDirectory.dir('generated/minecraft-source')
 def patchedJar = layout.buildDirectory.file('libs/minecraft-ancientloader.jar')
+def modJar = providers.gradleProperty('modJar')
+    .orElse(tasks.jar.getArchiveFile().get().asFile)
+def combinedJar = layout.buildDirectory.file(
+        'libs/minecraft-ancientloader-combined.jar'
+)
 
 tasks.register('decompileMinecraft', JavaExec) {
     group = 'minecraft'
-    description = 'Decompiles the supplied client jar into ignored build output.'
+    description = 'decompiles the client jar'
     classpath = configurations.decompiler
     mainClass = 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
     inputs.file(minecraftJar)
     outputs.dir(decompiledDir)
     doFirst {
         if (!minecraftJar.get().isFile()) {
-            throw new GradleException('Set -PminecraftJar=/path/to/client.jar (the client jar is never committed).')
+            throw new GradleException('set -PminecraftJar=/path/to/client.jar')
         }
         decompiledDir.get().asFile.mkdirs()
     }
@@ -61,7 +57,7 @@ tasks.register('decompileMinecraft', JavaExec) {
 
 tasks.register('patchMinecraft', JavaExec) {
     group = 'minecraft'
-    description = 'Injects AncientLoaderBootstrap into RubyDung.init and bundles loader classes.'
+    description = 'injects AncientLoaderBootstrap into RubyDung.init and bundles loader classes.'
     dependsOn tasks.named('jar')
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'net.ancientloader.bootstrap.MinecraftPatcher'
@@ -70,7 +66,7 @@ tasks.register('patchMinecraft', JavaExec) {
     outputs.file(patchedJar)
     doFirst {
         if (!minecraftJar.get().isFile()) {
-            throw new GradleException('Set -PminecraftJar=/path/to/client.jar.')
+            throw new GradleException('set -PminecraftJar=/path/to/client.jar')
         }
         patchedJar.get().asFile.parentFile.mkdirs()
     }
@@ -84,3 +80,4 @@ tasks.named('build') {
 tasks.register('cleanMinecraft', Delete) {
     delete layout.buildDirectory.dir('generated'), layout.buildDirectory.file('libs/minecraft-ancientloader.jar')
 }
+
