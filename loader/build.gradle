@@ -1,6 +1,10 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     id 'java-library'
+    id 'com.stehno.natives' version '0.3.1'
 }
+apply from: '../libraries.gradle'
 
 group = providers.gradleProperty('group').get()
 version = providers.gradleProperty('version').get()
@@ -24,8 +28,32 @@ dependencies {
     implementation 'org.ow2.asm:asm:9.10.1'
     implementation 'org.ow2.asm:asm-tree:9.10.1'
     implementation 'org.ow2.asm:asm-commons:9.10.1'
+    implementation 'org.lwjgl.lwjgl:lwjgl:2.9.3'
+    implementation 'org.lwjgl.lwjgl:lwjgl_util:2.9.3'
     decompiler 'org.vineflower:vineflower:1.10.1'
+}
 
+//natives {
+//    def os = getOs()
+//    println "Unpacking natives for $os to ./build/natives/$os"
+//    jars = [
+//            "lwjgl-platform-$lwjglVersion-natives-osx",
+//            "lwjgl-platform-$lwjglVersion-natives-windows",
+//            "lwjgl-platform-$lwjglVersion-natives-linux" ]
+//    platforms = "$os"
+//}
+
+
+def getOs() {
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        return 'win'
+    }
+    if (Os.isFamily(Os.FAMILY_MAC)) {
+        return 'osx'
+    }
+    if (Os.isFamily(Os.FAMILY_UNIX))
+        return 'linux' //this is not really all that correct
+    throw new GradleException('Your OS does not seem to be supported')
 }
 
 def minecraftJar = providers.gradleProperty('minecraftJar')
@@ -38,6 +66,15 @@ def modJar = providers.gradleProperty('modJar')
 def combinedJar = layout.buildDirectory.file(
         'libs/minecraft-ancientloader-combined.jar'
 )
+
+sourceSets {
+    main {
+        java {
+            srcDir(decompiledDir)
+        }
+    }
+}
+
 
 tasks.register('decompileMinecraft', JavaExec) {
     group = 'minecraft'
@@ -54,6 +91,22 @@ tasks.register('decompileMinecraft', JavaExec) {
     }
     args '-dgs=1', minecraftJar.get().absolutePath, decompiledDir.get().asFile.absolutePath
 }
+tasks.named("compileJava").configure { dependsOn(":loader:decompileMinecraft") }
+tasks.named("sourcesJar").configure { dependsOn(":loader:decompileMinecraft") }
+
+tasks.named('jar') {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    dependsOn tasks.named("decompileMinecraft")
+
+    from {
+        configurations.runtimeClasspath.collect { file ->
+            file.isDirectory() ? file : zipTree(file)
+        }
+    }
+
+    exclude 'META-INF/**'
+}
+
 
 tasks.register('patchMinecraft', JavaExec) {
     group = 'minecraft'
@@ -61,6 +114,7 @@ tasks.register('patchMinecraft', JavaExec) {
     dependsOn tasks.named('jar')
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'net.ancientloader.bootstrap.MinecraftPatcher'
+    systemProperty 'java.library.path', file("build/natives/${getOs()}")
     inputs.file(minecraftJar)
     inputs.file(tasks.named('jar').flatMap { it.archiveFile })
     outputs.file(patchedJar)

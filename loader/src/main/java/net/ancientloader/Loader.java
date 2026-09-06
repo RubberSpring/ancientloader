@@ -9,7 +9,7 @@ import net.ancientloader.mixin.MixinManager;
 public class Loader {
     public void loadMod(File jar) throws Exception {
 
-        System.out.println("Loading mod " + jar.getName());
+        System.out.println("loading mod " + jar.getName());
 
         URL url = jar.toURI().toURL();
 
@@ -24,7 +24,7 @@ public class Loader {
                 ServiceLoader.load(Mod.class, classLoader);
 
         for (Mod mod : serviceLoader) {
-            System.out.println("Loaded mod " + mod.getName());
+            System.out.println("loaded mod " + mod.getName());
 
             mod.onInitialize();
         }

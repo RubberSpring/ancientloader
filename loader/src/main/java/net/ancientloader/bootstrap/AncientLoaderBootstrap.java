@@ -24,9 +24,7 @@ public final class AncientLoaderBootstrap {
         for (File file : files) {
             if (!file.isFile() || !file.getName().endsWith(".jar")) continue;
             try {
-                System.out.println("loading mod " + file);
                 loader.loadMod(file);
-                System.out.println("loaded mod successfully: " + file);
             } catch (Exception exception) {
                 throw new IllegalStateException("Could not load mod " + file.getName(), exception);
             }
