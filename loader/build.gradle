@@ -2,7 +2,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id 'java-library'
-    id 'com.stehno.natives' version '0.3.1'
 }
 apply from: '../libraries.gradle'
 
@@ -22,6 +21,7 @@ repositories {
 
 configurations {
     decompiler
+    lwjglNatives
 }
 
 dependencies {
@@ -31,18 +31,10 @@ dependencies {
     implementation 'org.lwjgl.lwjgl:lwjgl:2.9.3'
     implementation 'org.lwjgl.lwjgl:lwjgl_util:2.9.3'
     decompiler 'org.vineflower:vineflower:1.10.1'
+    lwjglNatives 'org.lwjgl.lwjgl:lwjgl-platform:2.9.3:natives-windows'
+    lwjglNatives 'org.lwjgl.lwjgl:lwjgl-platform:2.9.3:natives-linux'
+    lwjglNatives 'org.lwjgl.lwjgl:lwjgl-platform:2.9.3:natives-osx'
 }
-
-//natives {
-//    def os = getOs()
-//    println "Unpacking natives for $os to ./build/natives/$os"
-//    jars = [
-//            "lwjgl-platform-$lwjglVersion-natives-osx",
-//            "lwjgl-platform-$lwjglVersion-natives-windows",
-//            "lwjgl-platform-$lwjglVersion-natives-linux" ]
-//    platforms = "$os"
-//}
-
 
 def getOs() {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
@@ -75,6 +67,16 @@ sourceSets {
     }
 }
 
+tasks.register('extractLwjglNatives', Sync) {
+    def os = getOs()
+
+    from configurations.lwjglNatives.collect { zipTree(it) }
+    into layout.buildDirectory.dir("natives/$os")
+
+    include '*.dll'
+    include '*.so'
+    include '*.dylib'
+}
 
 tasks.register('decompileMinecraft', JavaExec) {
     group = 'minecraft'
@@ -112,6 +114,7 @@ tasks.register('patchMinecraft', JavaExec) {
     group = 'minecraft'
     description = 'injects AncientLoaderBootstrap into RubyDung.init and bundles loader classes.'
     dependsOn tasks.named('jar')
+    dependsOn tasks.named('extractLwjglNatives')
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'net.ancientloader.bootstrap.MinecraftPatcher'
     systemProperty 'java.library.path', file("build/natives/${getOs()}")
@@ -126,6 +129,25 @@ tasks.register('patchMinecraft', JavaExec) {
     }
     args minecraftJar.get().absolutePath, tasks.named('jar').get().archiveFile.get().asFile.absolutePath, patchedJar.get().asFile.absolutePath
 }
+
+tasks.register('runMinecraft', JavaExec) {
+    dependsOn tasks.named('patchMinecraft')
+
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+
+    mainClass = 'com.mojang.rubydung.RubyDung'
+
+    classpath = files(
+            patchedJar,
+            configurations.runtimeClasspath
+    )
+
+    systemProperty 'java.library.path',
+            file("build/natives/${getOs()}").absolutePath
+}
+
 
 tasks.named('build') {
     dependsOn tasks.named('patchMinecraft')

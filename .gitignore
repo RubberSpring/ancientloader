@@ -131,3 +131,6 @@ gradle-app.setting
 # JDT-specific (Eclipse Java Development Tools)
 .classpath
 
+# Runtime files
+loader/mods
+loader/level.dat

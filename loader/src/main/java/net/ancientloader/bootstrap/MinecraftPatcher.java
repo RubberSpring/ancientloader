@@ -78,6 +78,17 @@ public final class MinecraftPatcher {
          */
         Map<String, byte[]> patch = new TreeMap<>();
 
+        byte[] terrain = original.get("terrain.png");
+
+        if (terrain == null) {
+            throw new IllegalArgumentException(
+                    "terrain.png was not found in the client jar"
+            );
+        }
+
+        patch.put("terrain.png", terrain);
+
+
         Map<String, byte[]> loaderEntries = readJar(loader);
 
         for (Map.Entry<String, byte[]> entry : loaderEntries.entrySet()) {
