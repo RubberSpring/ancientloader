@@ -78,6 +78,12 @@ tasks.register('extractLwjglNatives', Sync) {
     include '*.dylib'
 }
 
+tasks.register("copyMod", Copy) {
+    from file(project(":examplemod").tasks.named("jar").get().archiveFile)
+    into layout.projectDirectory.dir("mods")
+}
+
+
 tasks.register('decompileMinecraft', JavaExec) {
     group = 'minecraft'
     description = 'decompiles the client jar'
@@ -132,6 +138,7 @@ tasks.register('patchMinecraft', JavaExec) {
 
 tasks.register('runMinecraft', JavaExec) {
     dependsOn tasks.named('patchMinecraft')
+    dependsOn tasks.named('copyMod')
 
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(8)
