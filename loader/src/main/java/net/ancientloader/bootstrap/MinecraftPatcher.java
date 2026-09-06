@@ -22,6 +22,9 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnList;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.objectweb.asm.tree.AbstractInsnNode;
+import org.objectweb.asm.tree.TryCatchBlockNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 public final class MinecraftPatcher {
 
@@ -217,32 +220,112 @@ public final class MinecraftPatcher {
                         )
                 );
 
-                /*
-                 * Insert immediately at the beginning of init().
-                 */
                 method.instructions.insert(call);
+            }
 
-                /*
-                 * COMPUTE_MAXS is safer after modifying the method.
-                 *
-                 * We deliberately don't use COMPUTE_FRAMES here because
-                 * this old Minecraft class predates modern stack-map-frame
-                 * requirements and may not contain useful frame information.
-                 */
-                ClassWriter writer =
-                        new ClassWriter(ClassWriter.COMPUTE_MAXS);
+            /*
+             * Modify RubyDung.run().
+             */
+            /*
+             * Modify RubyDung.run().
+             */
+            if ("run".equals(method.name)
+                    && "()V".equals(method.desc)) {
 
-                node.accept(writer);
+                for (TryCatchBlockNode block : method.tryCatchBlocks) {
 
-                return writer.toByteArray();
+                    /*
+                     * We want the:
+                     *
+                     * catch (Exception var9)
+                     *
+                     * around init().
+                     */
+                    if (!"java/lang/Exception".equals(block.type)) {
+                        continue;
+                    }
+
+                    /*
+                     * Walk forward from the exception handler.
+                     */
+                    AbstractInsnNode current = block.handler;
+
+                    while (current != null) {
+
+                        if (current instanceof MethodInsnNode) {
+
+                            MethodInsnNode insn =
+                                    (MethodInsnNode) current;
+
+                            /*
+                             * Find:
+                             *
+                             *     var9.toString()
+                             *
+                             * The owner may be java/lang/Throwable rather
+                             * than java/lang/Exception.
+                             */
+                            if ("toString".equals(insn.name)
+                                    && "()Ljava/lang/String;".equals(insn.desc)
+                                    && ("java/lang/Throwable".equals(insn.owner)
+                                    || "java/lang/Exception".equals(insn.owner)
+                                    || "java/lang/Object".equals(insn.owner))) {
+
+                                System.out.println(
+                                        "MinecraftPatcher: Found exception "
+                                                + "toString() in RubyDung.run()"
+                                );
+
+                                /*
+                                 * Replace:
+                                 *
+                                 *     INVOKEVIRTUAL Throwable.toString()
+                                 *
+                                 * with:
+                                 *
+                                 *     INVOKESTATIC
+                                 *     AncientLoaderBootstrap.getStackTrace(Throwable)
+                                 *
+                                 * The ALOAD of var9 remains untouched.
+                                 */
+                                MethodInsnNode replacement =
+                                        new MethodInsnNode(
+                                                Opcodes.INVOKESTATIC,
+                                                BOOTSTRAP,
+                                                "getStackTrace",
+                                                "(Ljava/lang/Throwable;)"
+                                                        + "Ljava/lang/String;",
+                                                false
+                                        );
+
+                                method.instructions.set(
+                                        current,
+                                        replacement
+                                );
+
+                                System.out.println(
+                                        "MinecraftPatcher: Replaced exception "
+                                                + "toString() with full stack trace."
+                                );
+
+                                break;
+                            }
+                        }
+
+                        current = current.getNext();
+                    }
+                }
             }
         }
 
-        throw new IllegalArgumentException(
-                "RubyDung.init() was not found; " +
-                        "this is not the expected client jar"
-        );
+        ClassWriter writer =
+                new ClassWriter(ClassWriter.COMPUTE_MAXS);
+
+        node.accept(writer);
+
+        return writer.toByteArray();
     }
+
 
     /*
      * Writes the overlay JAR.

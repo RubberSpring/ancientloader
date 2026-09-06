@@ -1,6 +1,8 @@
 package net.ancientloader.bootstrap;
 
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import net.ancientloader.Loader;
 
 /** Entry point injected at the beginning of {@code RubyDung.init()}. */
@@ -9,6 +11,19 @@ public final class AncientLoaderBootstrap {
 
     private AncientLoaderBootstrap() {
     }
+
+    public static String getStackTrace(Throwable throwable) {
+
+        StringWriter writer = new StringWriter();
+        PrintWriter printer = new PrintWriter(writer);
+
+        throwable.printStackTrace(printer);
+
+        printer.flush();
+
+        return writer.toString();
+    }
+
 
     public static synchronized void initialize() {
         if (initialized) return;

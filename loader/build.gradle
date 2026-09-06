@@ -79,6 +79,10 @@ tasks.register('extractLwjglNatives', Sync) {
 }
 
 tasks.register("copyMod", Copy) {
+    dependsOn project(":examplemod").tasks.named("build")
+
+    outputs.upToDateWhen { false }
+
     from file(project(":examplemod").tasks.named("jar").get().archiveFile)
     into layout.projectDirectory.dir("mods")
 }
