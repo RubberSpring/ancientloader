@@ -16,3 +16,14 @@ Outputs:
 - `build/libs/minecraft-ancientloader.jar`: local patched client jar.
 
 Run `gradle decompileMinecraft` if you need the game's source.
+
+## Mixins
+
+AncientLoader uses SpongePowered Mixin through LaunchWrapper. Use
+`gradle :loader:runMinecraft` for local development: it starts the game with
+`net.ancientloader.launch.AncientLoaderTweaker`, which discovers mod JARs in
+`mods/` and registers the mixin configuration names listed in each JAR's
+`AncientLoader-MixinConfigs` manifest attribute before RubyDung is loaded.
+
+Prism installations must likewise launch through LaunchWrapper with that
+tweaker; starting `com.mojang.rubydung.RubyDung` directly cannot apply mixins.

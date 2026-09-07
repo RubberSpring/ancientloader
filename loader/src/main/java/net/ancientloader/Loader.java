@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ServiceLoader;
-import net.ancientloader.mixin.MixinManager;
 
 public class Loader {
     public void loadMod(File jar) throws Exception {
@@ -18,8 +17,6 @@ public class Loader {
                 Loader.class.getClassLoader()
         );
 
-        MixinManager.discover(classLoader, jar);
-
         ServiceLoader<Mod> serviceLoader =
                 ServiceLoader.load(Mod.class, classLoader);
 
@@ -28,7 +25,5 @@ public class Loader {
 
             mod.onInitialize();
         }
-
-        MixinManager.applyPending();
     }
 }

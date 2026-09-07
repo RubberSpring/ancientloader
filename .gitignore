@@ -9,6 +9,7 @@ client.jar
 
 # Log file
 *.log
+loader/logs
 
 # BlueJ files
 *.ctxt

@@ -17,6 +17,7 @@ java {
 
 repositories {
     mavenCentral()
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
 }
 
 configurations {
@@ -25,6 +26,9 @@ configurations {
 }
 
 dependencies {
+    implementation 'org.spongepowered:mixin:0.8.5'
+    implementation 'net.minecraft:launchwrapper:1.8'
+    implementation 'com.google.guava:guava:33.7.1-jre'
     implementation 'org.ow2.asm:asm:9.10.1'
     implementation 'org.ow2.asm:asm-tree:9.10.1'
     implementation 'org.ow2.asm:asm-commons:9.10.1'
@@ -108,15 +112,12 @@ tasks.named("sourcesJar").configure { dependsOn(":loader:decompileMinecraft") }
 
 tasks.named('jar') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
     dependsOn tasks.named("decompileMinecraft")
 
-    from {
-        configurations.runtimeClasspath.collect { file ->
-            file.isDirectory() ? file : zipTree(file)
-        }
-    }
+    from sourceSets.main.output
 
-    exclude 'META-INF/**'
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 
 
@@ -148,12 +149,16 @@ tasks.register('runMinecraft', JavaExec) {
         languageVersion = JavaLanguageVersion.of(8)
     }
 
-    mainClass = 'com.mojang.rubydung.RubyDung'
+    mainClass = 'net.minecraft.launchwrapper.Launch'
 
     classpath = files(
             patchedJar,
+            tasks.named('jar').get().archiveFile,
+            minecraftJar,
             configurations.runtimeClasspath
     )
+
+    args '--tweakClass', 'net.ancientloader.launch.AncientLoaderTweaker'
 
     systemProperty 'java.library.path',
             file("build/natives/${getOs()}").absolutePath
