@@ -17,7 +17,7 @@ java {
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    maven { url = 'https://repo.carm.cc/repository/maven-public/'}
 }
 
 configurations {
@@ -26,8 +26,11 @@ configurations {
 }
 
 dependencies {
-    implementation 'org.spongepowered:mixin:0.8.5'
-    implementation 'net.minecraft:launchwrapper:1.8'
+    implementation 'net.fabricmc:sponge-mixin:0.17.4+mixin.0.8.7'
+    implementation 'org.apache.logging.log4j:log4j-api:2.8.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.8.1'
+    implementation 'com.google.code.gson:gson:2.8.9'
+    implementation 'net.minecraft:launchwrapper:1.12'
     implementation 'com.google.guava:guava:33.7.1-jre'
     implementation 'org.ow2.asm:asm:9.10.1'
     implementation 'org.ow2.asm:asm-tree:9.10.1'

@@ -12,7 +12,7 @@ import net.minecraft.launchwrapper.LaunchClassLoader;
 import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
-import org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapper;
+import org.spongepowered.asm.service.mojang.MixinServiceLaunchWrapperBootstrap;
 
 /**
  * Starts Mixin and registers all mod configurations before the game entry
@@ -28,15 +28,28 @@ public final class AncientLoaderTweaker implements ITweaker {
 
     @Override
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
-        MixinServiceLaunchWrapper.bootstrap();
+        Thread.currentThread().setContextClassLoader(classLoader);
+
+        List<File> mods = findMods();
+
+        for (File mod : mods) {
+            try {
+                classLoader.addURL(mod.toURI().toURL());
+            } catch (IOException e) {
+                throw new IllegalStateException(
+                        "failed to load mod " + mod, e
+                );
+            }
+        }
+
+        new MixinServiceLaunchWrapperBootstrap().bootstrap();
 
         MixinBootstrap.init();
         MixinEnvironment.getDefaultEnvironment()
                 .setSide(MixinEnvironment.Side.CLIENT);
 
-        for (File mod : findMods()) {
+        for (File mod : mods) {
             try {
-                classLoader.addURL(mod.toURI().toURL());
                 registerMixinConfigs(mod);
             } catch (IOException exception) {
                 throw new IllegalStateException(
