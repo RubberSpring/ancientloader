@@ -4,11 +4,15 @@ import java.io.File;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ServiceLoader;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 public class Loader {
+    private static final Logger LOGGER = LogManager.getLogger();
+
     public void loadMod(File jar) throws Exception {
 
-        System.out.println("loading mod " + jar.getName());
+        LOGGER.info("loading mod {}", jar.getName());
 
         URL url = jar.toURI().toURL();
 
@@ -21,7 +25,7 @@ public class Loader {
                 ServiceLoader.load(Mod.class, classLoader);
 
         for (Mod mod : serviceLoader) {
-            System.out.println("loaded mod " + mod.getName());
+            LOGGER.info("loaded mod {}", mod.getName());
 
             mod.onInitialize();
         }

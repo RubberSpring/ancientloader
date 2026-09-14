@@ -78,7 +78,7 @@ public final class AncientLoaderTweaker implements ITweaker {
         File[] files = directory.listFiles();
         if (files == null) return Collections.emptyList();
 
-        List<File> mods = new ArrayList<File>();
+        List<File> mods = new ArrayList<>();
         for (File file : files) {
             if (file.isFile() && file.getName().endsWith(".jar")) mods.add(file);
         }
@@ -86,8 +86,7 @@ public final class AncientLoaderTweaker implements ITweaker {
     }
 
     private static void registerMixinConfigs(File mod) throws IOException {
-        JarFile jar = new JarFile(mod);
-        try {
+        try (JarFile jar = new JarFile(mod)) {
             Attributes attributes = jar.getManifest() == null ? null
                     : jar.getManifest().getMainAttributes();
             if (attributes == null) return;
@@ -97,8 +96,6 @@ public final class AncientLoaderTweaker implements ITweaker {
                 String name = config.trim();
                 if (!name.isEmpty()) Mixins.addConfiguration(name);
             }
-        } finally {
-            jar.close();
         }
     }
 }

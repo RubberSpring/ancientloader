@@ -43,7 +43,7 @@ dependencies {
     lwjglNatives 'org.lwjgl.lwjgl:lwjgl-platform:2.9.3:natives-osx'
 }
 
-def getOs() {
+static def getOs() {
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         return 'win'
     }
@@ -60,11 +60,6 @@ def minecraftJar = providers.gradleProperty('minecraftJar')
         .orElse(layout.projectDirectory.file('build/client.jar').asFile)
 def decompiledDir = layout.buildDirectory.dir('generated/minecraft-source')
 def patchedJar = layout.buildDirectory.file('libs/minecraft-ancientloader.jar')
-def modJar = providers.gradleProperty('modJar')
-    .orElse(tasks.jar.getArchiveFile().get().asFile)
-def combinedJar = layout.buildDirectory.file(
-        'libs/minecraft-ancientloader-combined.jar'
-)
 
 sourceSets {
     main {

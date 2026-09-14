@@ -2,10 +2,9 @@ package net.ancientloader.bootstrap;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -15,6 +14,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.jar.JarOutputStream;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
@@ -24,9 +25,9 @@ import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.TryCatchBlockNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 public final class MinecraftPatcher {
+    private static final Logger LOGGER = LogManager.getLogger();
 
     private static final String RUBYDUNG =
             "com/mojang/rubydung/RubyDung.class";
@@ -135,18 +136,18 @@ public final class MinecraftPatcher {
          */
         writeJar(output, patch);
 
-        System.out.println(
+        LOGGER.info(
                 "Generated Prism Minecraft JAR mod:"
         );
-        System.out.println(
-                "  " + output.getAbsolutePath()
+        LOGGER.info(
+                "\t{}", output.getAbsolutePath()
         );
-        System.out.println(
-                "Entries: " + patch.size()
+        LOGGER.info(
+                "Entries: {}", patch.size()
         );
 
         for (String name : patch.keySet()) {
-            System.out.println("  + " + name);
+            LOGGER.info("\t+ {}", name);
         }
     }
 
@@ -271,9 +272,8 @@ public final class MinecraftPatcher {
                                     || "java/lang/Exception".equals(insn.owner)
                                     || "java/lang/Object".equals(insn.owner))) {
 
-                                System.out.println(
-                                        "MinecraftPatcher: Found exception "
-                                                + "toString() in RubyDung.run()"
+                                LOGGER.info(
+                                        "MinecraftPatcher: Found exception toString() in RubyDung.run()"
                                 );
 
                                 /*
@@ -303,9 +303,8 @@ public final class MinecraftPatcher {
                                         replacement
                                 );
 
-                                System.out.println(
-                                        "MinecraftPatcher: Replaced exception "
-                                                + "toString() with full stack trace."
+                                LOGGER.info(
+                                        "MinecraftPatcher: Replaced exception toString() with full stack trace."
                                 );
 
                                 break;
@@ -343,7 +342,7 @@ public final class MinecraftPatcher {
 
         try (JarOutputStream output =
                      new JarOutputStream(
-                             new FileOutputStream(file))) {
+                             Files.newOutputStream(file.toPath()))) {
 
             for (Map.Entry<String, byte[]> entry :
                     entries.entrySet()) {

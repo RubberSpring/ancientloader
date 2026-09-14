@@ -1,8 +1,4 @@
 
 ext {
     lwjglVersion = "2.9.3"
-
-    libraries = [
-            lwjgl: "org.lwjgl.lwjgl:lwjgl:$lwjglVersion"
-    ]
 }
