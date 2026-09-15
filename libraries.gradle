@@ -1,4 +1,0 @@
-
-ext {
-    lwjglVersion = "2.9.3"
-}

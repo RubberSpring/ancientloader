@@ -3,7 +3,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 plugins {
     id 'java-library'
 }
-apply from: '../libraries.gradle'
 
 group = providers.gradleProperty('group').get()
 version = providers.gradleProperty('version').get()
@@ -118,29 +117,9 @@ tasks.named('jar') {
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
 }
 
-
-tasks.register('patchMinecraft', JavaExec) {
-    group = 'minecraft'
-    description = 'injects AncientLoaderBootstrap into RubyDung.init and bundles loader classes.'
+tasks.register('runMinecraft', JavaExec) {
     dependsOn tasks.named('jar')
     dependsOn tasks.named('extractLwjglNatives')
-    classpath = sourceSets.main.runtimeClasspath
-    mainClass = 'net.ancientloader.bootstrap.MinecraftPatcher'
-    systemProperty 'java.library.path', file("build/natives/${getOs()}")
-    inputs.file(minecraftJar)
-    inputs.file(tasks.named('jar').flatMap { it.archiveFile })
-    outputs.file(patchedJar)
-    doFirst {
-        if (!minecraftJar.get().isFile()) {
-            throw new GradleException('set -PminecraftJar=/path/to/client.jar')
-        }
-        patchedJar.get().asFile.parentFile.mkdirs()
-    }
-    args minecraftJar.get().absolutePath, tasks.named('jar').get().archiveFile.get().asFile.absolutePath, patchedJar.get().asFile.absolutePath
-}
-
-tasks.register('runMinecraft', JavaExec) {
-    dependsOn tasks.named('patchMinecraft')
     dependsOn tasks.named('copyMod')
 
     javaLauncher = javaToolchains.launcherFor {
@@ -150,9 +129,8 @@ tasks.register('runMinecraft', JavaExec) {
     mainClass = 'net.minecraft.launchwrapper.Launch'
 
     classpath = files(
-            patchedJar,
-            tasks.named('jar').get().archiveFile,
             minecraftJar,
+            tasks.named('jar').get().archiveFile,
             configurations.runtimeClasspath
     )
 
@@ -161,13 +139,3 @@ tasks.register('runMinecraft', JavaExec) {
     systemProperty 'java.library.path',
             file("build/natives/${getOs()}").absolutePath
 }
-
-
-tasks.named('build') {
-    dependsOn tasks.named('patchMinecraft')
-}
-
-tasks.register('cleanMinecraft', Delete) {
-    delete layout.buildDirectory.dir('generated'), layout.buildDirectory.file('libs/minecraft-ancientloader.jar')
-}
-
