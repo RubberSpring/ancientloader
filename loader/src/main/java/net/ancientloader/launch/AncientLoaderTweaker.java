@@ -7,6 +7,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
+
+import net.ancientloader.Loader;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
 import org.spongepowered.asm.launch.MixinBootstrap;
@@ -48,10 +50,12 @@ public final class AncientLoaderTweaker implements ITweaker {
         MixinEnvironment.getDefaultEnvironment()
                 .setSide(MixinEnvironment.Side.CLIENT);
 
+        Loader loader = new Loader();
         for (File mod : mods) {
             try {
                 registerMixinConfigs(mod);
-            } catch (IOException exception) {
+                loader.loadMod(mod);
+            } catch (Exception exception) {
                 throw new IllegalStateException(
                         "Could not load mod " + mod, exception);
             }
