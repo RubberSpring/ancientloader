@@ -29,6 +29,10 @@ public final class AncientLoaderTweaker implements ITweaker {
                               String profile) {
     }
 
+    /**
+     * Injects mod classes into LaunchClassLoader
+     * @param classLoader the LaunchClassLoader
+     */
     @Override
     public void injectIntoClassLoader(LaunchClassLoader classLoader) {
         Thread.currentThread().setContextClassLoader(classLoader);
@@ -65,6 +69,10 @@ public final class AncientLoaderTweaker implements ITweaker {
     }
 
 
+    /**
+     * Tweak launch target
+     * @return the target class
+     */
     @Override
     public String getLaunchTarget() {
         return "com.mojang.rubydung.RubyDung";
@@ -75,6 +83,10 @@ public final class AncientLoaderTweaker implements ITweaker {
         return new String[0];
     }
 
+    /**
+     * Finds mod jar files
+     * @return the list of mod jar files
+     */
     private static List<File> findMods() {
         File directory = new File("mods");
         if (!directory.exists() && !directory.mkdirs()) {
@@ -91,6 +103,11 @@ public final class AncientLoaderTweaker implements ITweaker {
         return mods;
     }
 
+    /**
+     * Registers mod Mixin configurations
+     * @param mod the mod file
+     * @throws IOException when fails to register
+     */
     private static void registerMixinConfigs(File mod) throws IOException {
         try (JarFile jar = new JarFile(mod)) {
             Attributes attributes = jar.getManifest() == null ? null

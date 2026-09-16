@@ -1,6 +1,6 @@
 .gradle/
 build/
-client.jar
+loader/build/client.jar
 *.iml
 .idea/
 ### Java template

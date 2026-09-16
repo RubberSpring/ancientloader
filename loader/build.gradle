@@ -2,6 +2,7 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = providers.gradleProperty('group').get()
@@ -12,6 +13,7 @@ java {
         languageVersion = JavaLanguageVersion.of(8)
     }
     withSourcesJar()
+    withJavadocJar()
 }
 
 repositories {
@@ -116,6 +118,10 @@ tasks.named('jar') {
     from sourceSets.main.output
 
     exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA'
+}
+
+tasks.named('javadoc') {
+    source = fileTree('src/main/java')
 }
 
 tasks.register('runMinecraft', JavaExec) {
