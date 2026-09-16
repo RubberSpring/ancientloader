@@ -1,0 +1,20 @@
+version: 0.1.0-{build}
+
+branches:
+  only:
+    - master
+
+image: Ubuntu2004
+
+environment:
+  APPVEYOR_SSH_KEY: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMm+h566UHeuowdEtifxWLEx2qWYcxOW1XmWh13IAV8j0Wa5xbb6kGTqvPdmuCfRzmmrlZYZkDI3LUNsrJCLxM3lNON565FDnZHzNAFEzI7hVZaCOuHsMsOwoXPAPbFrBNUyKeEPfKKszhwPbCU3Z7jybCXhMAhqNNt5Dgf0iSLQp5MQYcg3BUscES29dtwAQhAebBcrc3yuOA905kBRmya/rPM3u+EQTcJXKEX2f8LWvX9oap0SN2LsSdiKeab9vM4hMqQZ4+FXdTfjviA0ICwzxDzldL61BcKGF3BsPXX+Oneg/tnsDRa2Lyr2PdIEsgrDcY0e4YE2z+jri270xz rsa-key-20260916
+
+before_build:
+  - mkdir loader/build
+  - curl -Lo loader/build/client.jar https://launcher.mojang.com/v1/objects/393e8d4b4d708587e2accd7c5221db65365e1075/client.jar
+
+build_script:
+  - pwsh: bash ./gradlew build --no-daemon
+
+artifacts:
+  - path: loader\build\libs\*.jar
