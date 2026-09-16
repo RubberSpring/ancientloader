@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
+import com.llamalad7.mixinextras.MixinExtrasBootstrap;
 import net.ancientloader.Loader;
 import net.minecraft.launchwrapper.ITweaker;
 import net.minecraft.launchwrapper.LaunchClassLoader;
@@ -47,6 +48,7 @@ public final class AncientLoaderTweaker implements ITweaker {
         new MixinServiceLaunchWrapperBootstrap().bootstrap();
 
         MixinBootstrap.init();
+        MixinExtrasBootstrap.init();
         MixinEnvironment.getDefaultEnvironment()
                 .setSide(MixinEnvironment.Side.CLIENT);
 
