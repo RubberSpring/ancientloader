@@ -57,19 +57,13 @@ static def getOs() {
     throw new GradleException('Your OS does not seem to be supported')
 }
 
-def minecraftJar = providers.gradleProperty('minecraftJar')
-        .map { file(it) }
-        .orElse(layout.projectDirectory.file('build/client.jar').asFile)
-def decompiledDir = layout.buildDirectory.dir('generated/minecraft-source')
-def patchedJar = layout.buildDirectory.file('libs/minecraft-ancientloader.jar')
-
-sourceSets {
-    main {
-        java {
-            srcDir(decompiledDir)
-        }
-    }
-}
+def clients = [
+        rd132211 : file('clients/rd-132211.jar'),
+        rd132328 : file('clients/rd-132328.jar'),
+        rd20090515: file('clients/rd-20090515.jar'),
+        rd160052  : file('clients/rd-160052.jar'),
+        rd161348  : file('clients/rd-161348.jar')
+]
 
 tasks.register('extractLwjglNatives', Sync) {
     def os = getOs()
@@ -87,33 +81,99 @@ tasks.register("copyMod", Copy) {
 
     outputs.upToDateWhen { false }
 
-    from file(project(":examplemod").tasks.named("jar").get().archiveFile)
+    from project(":examplemod").tasks.named("jar").get().archiveFile
     into layout.projectDirectory.dir("mods")
 }
 
+clients.each { clientName, minecraftJar ->
+    def sourceSet = sourceSets.create(clientName)
 
-tasks.register('decompileMinecraft', JavaExec) {
-    group = 'minecraft'
-    description = 'decompiles the client jar'
-    classpath = configurations.decompiler
-    mainClass = 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
-    inputs.file(minecraftJar)
-    outputs.dir(decompiledDir)
-    doFirst {
-        if (!minecraftJar.get().isFile()) {
-            throw new GradleException('set -PminecraftJar=/path/to/client.jar')
+    def decompiledDir = layout.buildDirectory.dir(
+            "generated/${clientName}/minecraft-source"
+    )
+
+    def decompileTask = tasks.register(
+            "decompile${clientName.capitalize()}",
+            JavaExec
+    ) {
+        group = 'minecraft'
+        description = "Decompiles ${minecraftJar.name}"
+
+        classpath = configurations.decompiler
+
+        mainClass = 'org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler'
+
+        inputs.file(minecraftJar)
+        outputs.dir(decompiledDir)
+
+        doFirst {
+            if (!minecraftJar.isFile()) {
+                throw new GradleException(
+                        "Minecraft JAR does not exist: ${minecraftJar}"
+                )
+            }
+
+            decompiledDir.get().asFile.mkdirs()
         }
-        decompiledDir.get().asFile.mkdirs()
+
+        args(
+                '-dgs=1',
+                minecraftJar.absolutePath,
+                decompiledDir.get().asFile.absolutePath
+        )
     }
-    args '-dgs=1', minecraftJar.get().absolutePath, decompiledDir.get().asFile.absolutePath
+
+    sourceSet.java.srcDir(decompiledDir)
+
+    configurations.named("${clientName}Implementation") {
+        extendsFrom(configurations.implementation)
+    }
+
+    configurations.named("${clientName}CompileOnly") {
+        extendsFrom(configurations.compileOnly)
+    }
+
+    configurations.named("${clientName}RuntimeOnly") {
+        extendsFrom(configurations.runtimeOnly)
+    }
+
+    tasks.named(sourceSet.compileJavaTaskName) {
+        dependsOn(decompileTask)
+    }
+
+    tasks.register("${clientName}Jar", Jar) {
+        group = 'build'
+        description = "Builds ${clientName}.jar"
+
+        dependsOn(sourceSet.classesTaskName)
+
+        archiveFileName = "${clientName}.jar"
+
+        from(sourceSet.output)
+
+        from(sourceSets.main.output)
+
+        from(sourceSets.main.resources)
+
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+    }
 }
-tasks.named("compileJava").configure { dependsOn(":loader:decompileMinecraft") }
-tasks.named("sourcesJar").configure { dependsOn(":loader:decompileMinecraft") }
+
+
+tasks.register('buildClients') {
+    group = 'build'
+    description = 'Builds all Minecraft clients'
+
+    dependsOn tasks.named('build')
+    dependsOn clients.keySet().collect { "${it}Jar" }
+}
 
 tasks.named('jar') {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-
-    dependsOn tasks.named("decompileMinecraft")
 
     from sourceSets.main.output
 
@@ -125,9 +185,17 @@ tasks.named('javadoc') {
 }
 
 tasks.register('runMinecraft', JavaExec) {
-    dependsOn tasks.named('jar')
+    def clientName = providers.gradleProperty('client').orNull
+
+    if (clientName == null || !clients.containsKey(clientName)) {
+        throw new GradleException(
+                "missing or invalid -Pclient. clients: ${clients.keySet().join(', ')}"
+        )
+    }
+
     dependsOn tasks.named('extractLwjglNatives')
-    dependsOn tasks.named('copyMod')
+
+    dependsOn tasks.named("${clientName}Jar")
 
     javaLauncher = javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(8)
@@ -136,12 +204,13 @@ tasks.register('runMinecraft', JavaExec) {
     mainClass = 'net.minecraft.launchwrapper.Launch'
 
     classpath = files(
-            minecraftJar,
-            tasks.named('jar').get().archiveFile,
+            clients[clientName],
+            tasks.named("${clientName}Jar").get().archiveFile,
             configurations.runtimeClasspath
     )
 
-    args '--tweakClass', 'net.ancientloader.launch.AncientLoaderTweaker'
+    args '--tweakClass',
+            'net.ancientloader.launch.AncientLoaderTweaker'
 
     systemProperty 'java.library.path',
             file("build/natives/${getOs()}").absolutePath
