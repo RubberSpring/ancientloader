@@ -1,4 +1,3 @@
 rootProject.name = 'ancientloader'
 
 include 'loader'
-include 'examplemod'
