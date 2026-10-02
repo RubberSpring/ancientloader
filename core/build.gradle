@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(8)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+}
+
+dependencies {
+    implementation project(':loader')
+
+    compileOnly project(
+            path: ':loader',
+            configuration: 'rd132211MinecraftCompile'
+    )
+
+    compileOnly 'net.fabricmc:sponge-mixin:0.17.4+mixin.0.8.7'
+    compileOnly 'io.github.llamalad7:mixinextras-common:0.5.5'
+}
+
+jar {
+    manifest {
+        attributes 'AncientLoader-MixinConfigs': 'mixins.core.json'
+    }
+}

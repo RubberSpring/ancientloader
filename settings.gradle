@@ -1,3 +1,4 @@
 rootProject.name = 'ancientloader'
 
 include 'loader'
+include 'core'

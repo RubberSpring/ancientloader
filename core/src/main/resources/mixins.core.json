@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "net.ancientloader.core.mixin",
+  "compatibilityLevel": "JAVA_8",
+  "mixins": [
+    "RubyDungMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
