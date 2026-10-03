@@ -1,5 +1,7 @@
 package net.ancientloader.core;
 
+import java.util.HashMap;
+
 public final class AncientCore {
-    public static Registry<Block> blocks;
+    public static HashMap<String, Block> blocks = new HashMap<>();
 }

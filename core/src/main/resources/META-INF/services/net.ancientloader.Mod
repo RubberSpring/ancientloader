@@ -1,1 +1,1 @@
-net.ancientloader.examplemod.Main
+net.ancientloader.core.Main

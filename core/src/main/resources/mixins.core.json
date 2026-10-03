@@ -4,7 +4,7 @@
   "package": "net.ancientloader.core.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    ""
+    "ChunkMixin"
   ],
   "injectors": {
     "defaultRequire": 1
