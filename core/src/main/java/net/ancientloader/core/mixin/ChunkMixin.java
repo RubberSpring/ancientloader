@@ -9,11 +9,15 @@ import net.ancientloader.core.Block;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(Chunk.class)
 public class ChunkMixin {
+    @Unique
+    private static final Logger LOGGER = LogManager.getLogger();
+
     @Redirect(
             method = "rebuild",
             at = @At(
@@ -30,8 +34,7 @@ public class ChunkMixin {
             int y,
             int z
     ) {
-        Logger LOGGER = LogManager.getLogger();
-        //LOGGER.info(AncientCore.blocks.values());
+        LOGGER.debug("blocks registered: {}", AncientCore.blocks.keySet());
         for (Block block: AncientCore.blocks.values()) {
             for (int lay: block.layer) {
                 if (lay == y) {

@@ -1,15 +1,10 @@
 package net.ancientloader.launch;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 
@@ -43,29 +38,6 @@ public final class AncientLoaderTweaker implements ITweaker {
         Thread.currentThread().setContextClassLoader(classLoader);
 
         List<File> mods = findMods();
-        Path corePath;
-        try {
-            corePath = Files.list(Paths.get("."))
-                    .filter(p -> p.getFileName().toString().matches("core.*\\.jar"))
-                    .findFirst()
-                    .orElseThrow(() -> new FileNotFoundException(
-                            "Couldn't find core mod jar"
-                    ));
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    "Failed to search for core mod jar", e
-            );
-        }
-        File core = corePath.toFile();
-
-        // I think core needs to be registered first
-        try {
-            classLoader.addURL(core.toURI().toURL());
-        } catch (IOException e) {
-            throw new IllegalStateException(
-                    "failed to register core mod " + core, e
-            );
-        }
 
         for (File mod : mods) {
             try {
@@ -85,15 +57,6 @@ public final class AncientLoaderTweaker implements ITweaker {
                 .setSide(MixinEnvironment.Side.CLIENT);
 
         Loader loader = new Loader();
-
-        // core is loaded first
-        try {
-            registerMixinConfigs(core);
-            loader.loadMod(core);
-        } catch (Exception exception) {
-            throw new IllegalStateException(
-                    "Could not load core mod " + core, exception);
-        }
 
         for (File mod : mods) {
             try {
