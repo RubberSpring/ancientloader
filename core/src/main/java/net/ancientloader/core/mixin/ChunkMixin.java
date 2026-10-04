@@ -42,6 +42,6 @@ public class ChunkMixin {
             int z
     ) {
         Tile customTile = layerToTile(y);
-        tile.render(t, level, layer, x, y, z);
+        customTile.render(t, level, layer, x, y, z);
     }
 }

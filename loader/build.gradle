@@ -85,12 +85,21 @@ tasks.register('extractLwjglNatives', Sync) {
     include '*.dylib'
 }
 
-tasks.register("copyMod", Copy) {
+tasks.register("copyCore", Copy) {
     dependsOn project(":core").tasks.named("build")
 
     outputs.upToDateWhen { false }
 
     from project(":core").tasks.named("jar").get().archiveFile
+    into layout.projectDirectory.dir("mods")
+}
+
+tasks.register("copyMod", Copy) {
+    dependsOn project(":examplemod").tasks.named("build")
+
+    outputs.upToDateWhen { false }
+
+    from project(":examplemod").tasks.named("jar").get().archiveFile
     into layout.projectDirectory.dir("mods")
 }
 
@@ -168,6 +177,7 @@ clients.each { clientName, minecraftJar ->
         description = "Builds ${clientName}.jar"
 
         dependsOn(sourceSet.classesTaskName)
+        dependsOn("copyCore")
         dependsOn("copyMod")
 
         archiveFileName = "${clientName}.jar"
