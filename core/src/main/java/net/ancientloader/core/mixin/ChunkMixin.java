@@ -14,15 +14,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Chunk.class)
 public class ChunkMixin {
     @Unique
-    private static Tile layerToTile(int y) {
+    private static Tile getCustomTile(int y) {
         for (Block block : AncientCore.blocks.values()) {
-            for (int layer : block.layer) {
-                if (layer == y) {
+            for (int blockY : block.layer) {
+                if (blockY == y) {
                     return block.tile;
                 }
             }
         }
-        return Tile.rock;
+        return null;
     }
 
     @Redirect(
@@ -41,7 +41,11 @@ public class ChunkMixin {
             int y,
             int z
     ) {
-        Tile customTile = layerToTile(y);
-        customTile.render(t, level, layer, x, y, z);
+        Tile customTile = getCustomTile(y);
+        if (customTile != null) {
+            customTile.render(t, level, layer, x, y, z);
+        } else {
+            tile.render(t, level, layer, x, y, z);
+        }
     }
 }

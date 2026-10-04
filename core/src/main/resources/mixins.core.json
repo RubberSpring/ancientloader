@@ -5,8 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "ChunkMixin",
-    "PlayerAccessor",
-    "RubyDungMixin"
+    "PlayerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
