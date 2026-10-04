@@ -4,7 +4,9 @@
   "package": "net.ancientloader.core.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-    "ChunkMixin"
+    "ChunkMixin",
+    "PlayerAccessor",
+    "RubyDungMixin"
   ],
   "injectors": {
     "defaultRequire": 1
