@@ -6,8 +6,6 @@ import com.mojang.rubydung.level.Tesselator;
 import com.mojang.rubydung.level.Tile;
 import net.ancientloader.core.AncientCore;
 import net.ancientloader.core.Block;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -16,7 +14,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(Chunk.class)
 public class ChunkMixin {
     @Unique
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static Tile layerToTile(int y) {
+        for (Block block : AncientCore.blocks.values()) {
+            for (int layer : block.layer) {
+                if (layer == y) {
+                    return block.tile;
+                }
+            }
+        }
+        return Tile.rock;
+    }
 
     @Redirect(
             method = "rebuild",
@@ -34,13 +41,7 @@ public class ChunkMixin {
             int y,
             int z
     ) {
-        LOGGER.debug("blocks registered: {}", AncientCore.blocks.keySet());
-        for (Block block: AncientCore.blocks.values()) {
-            for (int lay: block.layer) {
-                if (lay == y) {
-                    block.tile.render(t, level, layer, x, y, z);
-                }
-            }
-        }
+        Tile customTile = layerToTile(y);
+        tile.render(t, level, layer, x, y, z);
     }
 }
