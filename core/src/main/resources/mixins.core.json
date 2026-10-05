@@ -5,7 +5,7 @@
   "compatibilityLevel": "JAVA_8",
   "mixins": [
     "ChunkMixin",
-    "PlayerAccessor"
+    "PlayerInvoker"
   ],
   "injectors": {
     "defaultRequire": 1
