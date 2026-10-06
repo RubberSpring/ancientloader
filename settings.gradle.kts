@@ -1,0 +1,5 @@
+rootProject.name = "ancientloader"
+
+include("loader")
+include("core")
+include("examplemod")
